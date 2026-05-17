@@ -199,6 +199,8 @@ function switchView(view) {
   document.getElementById('day-view').classList.toggle('hidden', view !== 'day');
   document.getElementById('btn-week').classList.toggle('active', view === 'week');
   document.getElementById('btn-day').classList.toggle('active', view === 'day');
+  document.body.classList.toggle('view-day', view === 'day');
+  document.body.classList.toggle('view-week', view === 'week');
   if (view === 'week') renderWeek();
   else renderDay();
 }
@@ -214,4 +216,5 @@ document.getElementById('prev-day').addEventListener('click', () => { dayDate = 
 document.getElementById('next-day').addEventListener('click', () => { dayDate = addDays(dayDate, 1); renderDay(); });
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+document.body.classList.add('view-week');
 renderWeek();
