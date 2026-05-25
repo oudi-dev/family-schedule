@@ -10,12 +10,24 @@
   <header>
     <h1>Family Schedule</h1>
     <div class="view-toggle">
+      <button id="btn-month">Month</button>
       <button id="btn-week" class="active">Week</button>
       <button id="btn-day">Day</button>
     </div>
   </header>
 
   <main>
+    <!-- Month View -->
+    <section id="month-view" class="hidden">
+      <div class="month-nav">
+        <button id="prev-month">&#8592;</button>
+        <span id="month-label"></span>
+        <button id="next-month">&#8594;</button>
+      </div>
+      <div class="month-dow-header" id="month-dow-header"></div>
+      <div class="month-grid" id="month-grid"></div>
+    </section>
+
     <!-- Week View -->
     <section id="week-view">
       <div class="week-nav">

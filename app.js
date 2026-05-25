@@ -87,6 +87,7 @@ today.setHours(0, 0, 0, 0);
 
 let currentView = 'week';
 let weekOffset = 0;   // weeks from today's week
+let monthOffset = 0;  // months from today's month
 let dayDate = new Date(today);
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -117,6 +118,82 @@ function fmtHour(h) {
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour = h % 12 || 12;
   return `${hour}:00 ${ampm}`;
+}
+
+// ── Render: Month View ───────────────────────────────────────────────────────
+function renderMonth() {
+  const ref = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+  const year = ref.getFullYear();
+  const month = ref.getMonth();
+
+  document.getElementById('month-label').textContent =
+    ref.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+
+  // Day-of-week header (Sun–Sat)
+  const dowHeader = document.getElementById('month-dow-header');
+  if (!dowHeader.children.length) {
+    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(d => {
+      const el = document.createElement('div');
+      el.textContent = d;
+      dowHeader.appendChild(el);
+    });
+  }
+
+  const grid = document.getElementById('month-grid');
+  grid.innerHTML = '';
+
+  // First cell starts on the weekday of the 1st
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPrevMonth = new Date(year, month, 0).getDate();
+  const totalCells = Math.ceil((firstDow + daysInMonth) / 7) * 7;
+
+  for (let i = 0; i < totalCells; i++) {
+    let cellDate, isOtherMonth;
+    if (i < firstDow) {
+      cellDate = new Date(year, month - 1, daysInPrevMonth - firstDow + 1 + i);
+      isOtherMonth = true;
+    } else if (i >= firstDow + daysInMonth) {
+      cellDate = new Date(year, month + 1, i - firstDow - daysInMonth + 1);
+      isOtherMonth = true;
+    } else {
+      cellDate = new Date(year, month, i - firstDow + 1);
+      isOtherMonth = false;
+    }
+
+    const dateStr = formatDate(cellDate);
+    const isToday = dateStr === formatDate(today);
+    const events = getEventsForDate(dateStr);
+
+    const cell = document.createElement('div');
+    cell.className = 'month-cell' +
+      (isToday ? ' today' : '') +
+      (isOtherMonth ? ' other-month' : '');
+    cell.addEventListener('click', () => { dayDate = new Date(cellDate); switchView('day'); });
+
+    const num = document.createElement('div');
+    num.className = 'month-day-num';
+    num.textContent = cellDate.getDate();
+    cell.appendChild(num);
+
+    const MAX_DOTS = 3;
+    events.slice(0, MAX_DOTS).forEach(e => {
+      const dot = document.createElement('div');
+      dot.className = 'month-event-dot';
+      dot.style.background = e.color;
+      dot.textContent = e.title;
+      cell.appendChild(dot);
+    });
+
+    if (events.length > MAX_DOTS) {
+      const more = document.createElement('div');
+      more.className = 'month-more';
+      more.textContent = `+${events.length - MAX_DOTS} more`;
+      cell.appendChild(more);
+    }
+
+    grid.appendChild(cell);
+  }
 }
 
 // ── Render: Week View ─────────────────────────────────────────────────────────
@@ -195,19 +272,27 @@ function renderDay() {
 // ── View switching ────────────────────────────────────────────────────────────
 function switchView(view) {
   currentView = view;
+  document.getElementById('month-view').classList.toggle('hidden', view !== 'month');
   document.getElementById('week-view').classList.toggle('hidden', view !== 'week');
   document.getElementById('day-view').classList.toggle('hidden', view !== 'day');
+  document.getElementById('btn-month').classList.toggle('active', view === 'month');
   document.getElementById('btn-week').classList.toggle('active', view === 'week');
   document.getElementById('btn-day').classList.toggle('active', view === 'day');
+  document.body.classList.toggle('view-month', view === 'month');
   document.body.classList.toggle('view-day', view === 'day');
   document.body.classList.toggle('view-week', view === 'week');
-  if (view === 'week') renderWeek();
+  if (view === 'month') renderMonth();
+  else if (view === 'week') renderWeek();
   else renderDay();
 }
 
 // ── Events ────────────────────────────────────────────────────────────────────
+document.getElementById('btn-month').addEventListener('click', () => switchView('month'));
 document.getElementById('btn-week').addEventListener('click', () => switchView('week'));
 document.getElementById('btn-day').addEventListener('click', () => switchView('day'));
+
+document.getElementById('prev-month').addEventListener('click', () => { monthOffset--; renderMonth(); });
+document.getElementById('next-month').addEventListener('click', () => { monthOffset++; renderMonth(); });
 
 document.getElementById('prev-week').addEventListener('click', () => { weekOffset--; renderWeek(); });
 document.getElementById('next-week').addEventListener('click', () => { weekOffset++; renderWeek(); });
